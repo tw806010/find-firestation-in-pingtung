@@ -234,7 +234,7 @@
 </footer>
 
 <script>
-// 1. 屏東縣消防分隊資料庫（還原為清晰易讀狀態）
+// 1. 屏東縣消防分隊資料庫
 const STATIONS = [
   { battalion: "第一大隊", fullName: "第一大隊屏東分隊", address: "屏東市豐榮里勝利東路47號", phone: "08-7360163", lat: 22.6834, lon: 120.4924 },
   { battalion: "第一大隊", fullName: "第一大隊公館分隊", address: "屏東市龍華路52號", phone: "08-7517435", lat: 22.6655, lon: 120.4853 },
@@ -247,7 +247,7 @@ const STATIONS = [
   { battalion: "第一大隊", fullName: "第一大隊瑪家分隊", address: "屏東縣瑪家鄉北葉村風景路1-20號", phone: "08-7991020", lat: 22.6759, lon: 120.687 },
   { battalion: "第一大隊", fullName: "第一大隊三地門分隊", address: "屏東縣三地門鄉三地門村中正路2段103號", phone: "08-7991970", lat: 22.716, lon: 120.6523 },
   { battalion: "第一大隊", fullName: "第一大隊霧台分隊", address: "屏東縣霧台鄉霧台村神山巷69號", phone: "08-7902660", lat: 22.7443, lon: 120.7322 },
-  { battalion: "第二大隊", fullName: "第二大隊內埔分隊", address: "屏東縣內埔鄉內田村廣濟路209號", phone: "08-7792184", lat: 22.6142, lon: 120.5668 },[cite: 1]
+  { battalion: "第二大隊", fullName: "第二大隊內埔分隊", address: "屏東縣內埔鄉內田村廣濟路209號", phone: "08-7792184", lat: 22.6142, lon: 120.5668 },
   { battalion: "第二大隊", fullName: "第二大隊龍泉分隊", address: "屏東縣內埔鄉龍泉村中勝路308號", phone: "08-7705079", lat: 22.5900, lon: 120.5750 },
   { battalion: "第二大隊", fullName: "第二大隊潮州分隊", address: "屏東縣潮州鎮三共里文化路191號", phone: "08-7882079", lat: 22.5500, lon: 120.5361 },
   { battalion: "第二大隊", fullName: "第二大隊竹田分隊", address: "屏東縣竹田鄉竹田村自強路41-20號", phone: "08-7710498", lat: 22.5866, lon: 120.5398 },
@@ -292,12 +292,7 @@ function fillHint(value) {
   doSearch();
 }
 
-// 4. 綁定 Enter 鍵
-document.getElementById('addressInput').addEventListener('keydown', function(e) {
-  if (e.key === 'Enter') doSearch();
-});
-
-// 5. 核心查詢功能
+// 4. 核心查詢功能
 async function doSearch() {
   const query = document.getElementById('addressInput').value.trim();
   if (!query) return;
@@ -401,33 +396,54 @@ async function doSearch() {
 // 🛡️ 網頁安全防護機制：阻擋右鍵、F12 及相關組合鍵
 // ==========================================
 
-// 1. 停用滑鼠右鍵選單
-document.addEventListener('contextmenu', function(e) {
-  e.preventDefault();
-});
+//確保網頁 DOM 元素載入完成後再進行事件綁定
+document.addEventListener('DOMContentLoaded', function() {
+  // 綁定 Enter 鍵
+  const addressInput = document.getElementById('addressInput');
+  if (addressInput) {
+    addressInput.addEventListener('keydown', function(e) {
+      if (e.key === 'Enter') {
+        e.stopPropagation(); // 防止事件向上冒泡觸發防護機制
+        doSearch();
+      }
+    });
+  }
 
-// 2. 阻擋 F12 鍵、Ctrl+Shift+I 鍵
-document.addEventListener('keydown', function(e) {
-  // 阻擋 F12
-  if (e.key === 'F12') {
+  // 1. 停用滑鼠右鍵選單
+  document.addEventListener('contextmenu', function(e) {
     e.preventDefault();
-  }
-  // 阻擋 Ctrl + Shift + I (Windows/Linux 開發者工具組合鍵)
-  if (e.ctrlKey && e.shiftKey && (e.key === 'I' || e.key === 'i')) {
-    e.preventDefault();
-  }
-  // 阻擋 Ctrl + Shift + J (Windows/Linux 主控台組合鍵)
-  if (e.ctrlKey && e.shiftKey && (e.key === 'J' || e.key === 'j')) {
-    e.preventDefault();
-  }
-  // 阻擋 Ctrl + U (Windows/Linux 檢視原始碼組合鍵)
-  if (e.ctrlKey && (e.key === 'U' || e.key === 'u')) {
-    e.preventDefault();
-  }
-  // 阻擋 Cmd + Opt + I (Mac 開發者工具組合鍵)
-  if (e.metaKey && e.altKey && (e.key === 'I' || e.key === 'i')) {
-    e.preventDefault();
-  }
+  });
+
+  // 2. 精準阻擋 F12 鍵、Ctrl+Shift+I 等組合鍵，不誤傷正常輸入
+  document.addEventListener('keydown', function(e) {
+    // 阻擋 F12
+    if (e.key === 'F12') {
+      e.preventDefault();
+      return;
+    }
+    
+    // 檢查是否按下了 Ctrl (Windows/Linux) 或 Cmd (Mac)
+    const isModifier = e.ctrlKey || e.metaKey;
+    
+    if (isModifier) {
+      // 阻擋 Ctrl/Cmd + Shift + I 或 J (開發者工具)
+      if (e.shiftKey && (e.key === 'I' || e.key === 'i' || e.key === 'J' || e.key === 'j')) {
+        e.preventDefault();
+        return;
+      }
+      // 阻擋 Ctrl/Cmd + U (檢視原始碼)
+      if (e.key === 'U' || e.key === 'u') {
+        e.preventDefault();
+        return;
+      }
+    }
+    
+    // Mac 專用：阻擋 Cmd + Opt + I / J
+    if (e.metaKey && e.altKey && (e.key === 'I' || e.key === 'i' || e.key === 'J' || e.key === 'j')) {
+      e.preventDefault();
+      return;
+    }
+  });
 });
 </script>
 </body>
